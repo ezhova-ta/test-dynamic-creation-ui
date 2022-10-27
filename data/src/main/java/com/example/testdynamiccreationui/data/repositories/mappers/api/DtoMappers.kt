@@ -5,11 +5,16 @@ import com.example.testdynamiccreationui.data.repositories.mappers.api.FormButto
 import com.example.testdynamiccreationui.data.repositories.mappers.api.FormDtoMapper.toDomain
 import com.example.testdynamiccreationui.data.repositories.mappers.api.FormTextInputDtoMapper.toDomain
 import com.example.testdynamiccreationui.data.repositories.mappers.api.LayoutDtoMapper.toDomain
+import com.example.testdynamiccreationui.data.repositories.mappers.api.UiConfigurationActivityDtoMapper.toDomain
 import com.example.testdynamiccreationui.domain.models.*
 
 object UiConfigurationResponseMapper : DtoMapper<UiConfigurationResponse, UiConfiguration> {
 	override fun UiConfigurationResponse.toDomain(): UiConfiguration {
-		TODO("Not yet implemented")
+		return UiConfiguration(activities = activities.toDomain())
+	}
+
+	private fun List<UiConfigurationActivityDto>.toDomain(): List<UiConfigurationActivity> {
+		return map { it.toDomain() }
 	}
 }
 
