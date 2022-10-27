@@ -5,5 +5,5 @@ data class FormTextInputDto(
 	val caption: String,
 	val attribute: String,
 	val required: Boolean,
-	val suggestions: List<String>
+	val suggestions: List<String>?
 )
