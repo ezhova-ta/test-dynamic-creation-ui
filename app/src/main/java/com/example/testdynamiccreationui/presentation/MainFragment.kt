@@ -3,18 +3,23 @@ package com.example.testdynamiccreationui.presentation
 import android.content.Context
 import android.os.Bundle
 import android.text.InputType
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintLayout.LayoutParams.*
+import androidx.core.view.marginTop
+import androidx.core.view.setPadding
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.example.testdynamiccreationui.R
 import com.example.testdynamiccreationui.domain.models.FormButton
+import com.example.testdynamiccreationui.domain.models.FormButtonType.BUTTON
 import com.example.testdynamiccreationui.domain.models.FormTextInput
 import com.example.testdynamiccreationui.domain.models.TextInputType.AUTO_COMPLETE_TEXT_VIEW
+import com.example.testdynamiccreationui.domain.models.TextInputType.PLAIN_TEXT
 import com.example.testdynamiccreationui.domain.models.UiConfiguration
 
 class MainFragment : Fragment() {
@@ -47,9 +52,12 @@ class MainFragment : Fragment() {
 		val uiConfigurationActivity = uiConfiguration.activities.firstOrNull() ?: return
 		val headerView = createHeaderView(uiConfigurationActivity.layout.header)
 		val inputsView = createTextInputsView(headerView.id, uiConfigurationActivity.layout.form.text)
+		val buttonsView = createButtonsView(inputsView.id, uiConfigurationActivity.layout.form.buttons)
 		(view as ConstraintLayout).apply {
+			setPadding(16) // TODO Padding in dp
 			addView(headerView)
 			addView(inputsView)
+			addView(buttonsView)
 		}
 	}
 
@@ -85,7 +93,7 @@ class MainFragment : Fragment() {
 		textInputs.forEach { textInput ->
 			val textInputView = when(textInput.type) {
 				AUTO_COMPLETE_TEXT_VIEW -> createAutoCompleteTextInputView(textInput)
-				else -> createPlainTextInputView(textInput)
+				PLAIN_TEXT -> createPlainTextInputView(textInput)
 			}
 			addView(textInputView)
 		}
@@ -112,7 +120,32 @@ class MainFragment : Fragment() {
 		}
 	}
 
+	private fun createButtonsView(viewOnTopId: Int, buttons: List<FormButton>): LinearLayout {
+		val layoutParams = ConstraintLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply {
+			topToBottom = viewOnTopId
+			startToStart = PARENT_ID
+			endToEnd = PARENT_ID
+			topMargin = 16 // TODO Margin in dp
+		}
+
+		return LinearLayout(requireContext()).apply {
+			id = R.id.buttonsView
+			this.layoutParams = layoutParams
+			orientation = LinearLayout.VERTICAL
+			addButtonViews(buttons)
+		}
+	}
+
 	private fun LinearLayout.addButtonViews(buttons: List<FormButton>) {
-		TODO()
+		buttons.forEach { button ->
+			val buttonView = when(button.type) {
+				BUTTON -> createButtonView(button)
+			}
+			addView(buttonView)
+		}
+	}
+
+	private fun createButtonView(button: FormButton): Button {
+		return Button(requireContext()).apply { hint = button.caption }
 	}
 }

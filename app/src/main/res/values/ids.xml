@@ -3,4 +3,5 @@
     <item type="id" name="screenContainer" />
     <item type="id" name="fragmentHeaderView" />
     <item type="id" name="textInputsView" />
+    <item type="id" name="buttonsView" />
 </resources>
