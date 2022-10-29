@@ -7,6 +7,9 @@ import com.example.testdynamiccreationui.data.repositories.mappers.api.FormTextI
 import com.example.testdynamiccreationui.data.repositories.mappers.api.LayoutDtoMapper.toDomain
 import com.example.testdynamiccreationui.data.repositories.mappers.api.UiConfigurationActivityDtoMapper.toDomain
 import com.example.testdynamiccreationui.domain.models.*
+import com.example.testdynamiccreationui.domain.models.FormButtonType.BUTTON
+import com.example.testdynamiccreationui.domain.models.TextInputType.AUTO_COMPLETE_TEXT_VIEW
+import com.example.testdynamiccreationui.domain.models.TextInputType.PLAIN_TEXT
 
 object UiConfigurationResponseMapper : DtoMapper<UiConfigurationResponse, UiConfiguration> {
 	override fun UiConfigurationResponse.toDomain(): UiConfiguration {
@@ -49,8 +52,13 @@ object FormDtoMapper : DtoMapper<FormDto, Form> {
 
 object FormTextInputDtoMapper : DtoMapper<FormTextInputDto, FormTextInput> {
 	override fun FormTextInputDto.toDomain(): FormTextInput {
+		val domainTextInputType = when(type) {
+			AUTO_COMPLETE_TEXT_VIEW.text -> AUTO_COMPLETE_TEXT_VIEW
+			else -> PLAIN_TEXT
+		}
+
 		return FormTextInput(
-			type = type,
+			type = domainTextInputType,
 			caption = caption,
 			attribute = attribute,
 			required = required,
@@ -61,8 +69,12 @@ object FormTextInputDtoMapper : DtoMapper<FormTextInputDto, FormTextInput> {
 
 object FormButtonDtoMapper : DtoMapper<FormButtonDto, FormButton> {
 	override fun FormButtonDto.toDomain(): FormButton {
+		val domainButtonType = when(type) {
+			else -> BUTTON
+		}
+
 		return FormButton(
-			type = type,
+			type = domainButtonType,
 			caption = caption,
 			formAction = formAction
 		)

@@ -6,6 +6,6 @@ package com.example.testdynamiccreationui.data.repositories.mappers.api
  * @param T data transfer object type
  * @param R domain entity type
  */
-interface DtoMapper<T, R> {
+sealed interface DtoMapper<T, R> {
 	fun T.toDomain(): R
 }

@@ -34,7 +34,6 @@ class MainViewModel : ViewModel() {
 		Toothpick.inject(this, mainScreenScope)
 	}
 
-	// TODO Temp solution
 	fun onScreenCreated() {
 		getUiConfiguration()
 	}
