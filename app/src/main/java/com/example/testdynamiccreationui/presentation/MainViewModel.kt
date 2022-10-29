@@ -49,6 +49,10 @@ class MainViewModel : ViewModel() {
 		}
 	}
 
+	fun onButtonClick(formAction: String, attributes: Map<String, String>) {
+		TODO()
+	}
+
 	override fun onCleared() {
 		Toothpick.closeScope(MAIN_SCREEN_VIEW_MODEL_SCOPE)
 		super.onCleared()
