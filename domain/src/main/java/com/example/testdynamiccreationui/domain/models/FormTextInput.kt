@@ -5,7 +5,7 @@ data class FormTextInput(
 	val caption: String,
 	val attribute: String,
 	val required: Boolean,
-	val suggestions: List<String>?
+	val suggestions: Set<String>
 )
 
 enum class TextInputType(val text: String) {

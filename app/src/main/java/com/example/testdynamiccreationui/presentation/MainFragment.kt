@@ -2,7 +2,6 @@ package com.example.testdynamiccreationui.presentation
 
 import android.content.Context
 import android.os.Bundle
-import android.text.Editable
 import android.text.InputType
 import android.view.LayoutInflater
 import android.view.View
@@ -105,7 +104,7 @@ class MainFragment : Fragment() {
 			requireContext(),
 			// TODO Temp android.R.layout.simple_dropdown_item_1line
 			android.R.layout.simple_dropdown_item_1line,
-			textInput.suggestions ?: emptyList()
+			textInput.suggestions.toTypedArray()
 		)
 
 		return AutoCompleteTextView(requireContext()).apply {

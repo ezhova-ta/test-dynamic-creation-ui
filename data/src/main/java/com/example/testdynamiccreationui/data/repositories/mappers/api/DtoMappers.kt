@@ -62,7 +62,7 @@ object FormTextInputDtoMapper : DtoMapper<FormTextInputDto, FormTextInput> {
 			caption = caption,
 			attribute = attribute,
 			required = required,
-			suggestions = suggestions
+			suggestions = suggestions ?: emptySet()
 		)
 	}
 }
