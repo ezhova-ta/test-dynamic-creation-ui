@@ -2,6 +2,6 @@ package com.example.testdynamiccreationui.domain.repositories
 
 import com.example.testdynamiccreationui.domain.models.UiConfiguration
 
-interface UserRepository {
+interface Repository {
 	suspend fun getUiConfiguration(): UiConfiguration
 }
