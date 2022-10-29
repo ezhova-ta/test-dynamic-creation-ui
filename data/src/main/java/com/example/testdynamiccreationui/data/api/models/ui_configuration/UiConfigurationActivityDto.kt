@@ -1,4 +1,4 @@
-package com.example.testdynamiccreationui.data.api.models
+package com.example.testdynamiccreationui.data.api.models.ui_configuration
 
 import com.google.gson.annotations.SerializedName
 
