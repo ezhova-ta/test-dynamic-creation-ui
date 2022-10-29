@@ -14,12 +14,13 @@ import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.example.testdynamiccreationui.R
-import com.example.testdynamiccreationui.domain.models.FormButton
-import com.example.testdynamiccreationui.domain.models.FormButtonType.BUTTON
-import com.example.testdynamiccreationui.domain.models.FormTextInput
-import com.example.testdynamiccreationui.domain.models.TextInputType.AUTO_COMPLETE_TEXT_VIEW
-import com.example.testdynamiccreationui.domain.models.TextInputType.PLAIN_TEXT
-import com.example.testdynamiccreationui.domain.models.UiConfiguration
+import com.example.testdynamiccreationui.domain.models.ui_configuration.FormButton
+import com.example.testdynamiccreationui.domain.models.ui_configuration.FormButtonType.BUTTON
+import com.example.testdynamiccreationui.domain.models.ui_configuration.FormTextInput
+import com.example.testdynamiccreationui.domain.models.ui_configuration.TextInputType.AUTO_COMPLETE_TEXT_VIEW
+import com.example.testdynamiccreationui.domain.models.ui_configuration.TextInputType.PLAIN_TEXT
+import com.example.testdynamiccreationui.domain.models.ui_configuration.UiConfiguration
+import com.example.testdynamiccreationui.domain.models.user.User
 
 class MainFragment : Fragment() {
 	private val viewModel: MainViewModel by viewModels()
@@ -42,9 +43,12 @@ class MainFragment : Fragment() {
 
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 		super.onViewCreated(view, savedInstanceState)
-		viewModel.uiConfigurationLiveData.observe(viewLifecycleOwner) { uiConfiguration ->
-			showUi(uiConfiguration)
-		}
+		viewModel.foundUserLiveData.observe(viewLifecycleOwner) { showFoundUser(it) }
+		viewModel.uiConfigurationLiveData.observe(viewLifecycleOwner) { showUi(it) }
+	}
+
+	private fun showFoundUser(user: User) {
+		TODO()
 	}
 
 	private fun showUi(uiConfiguration: UiConfiguration) {

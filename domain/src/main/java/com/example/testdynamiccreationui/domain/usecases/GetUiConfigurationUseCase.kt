@@ -1,6 +1,6 @@
 package com.example.testdynamiccreationui.domain.usecases
 
-import com.example.testdynamiccreationui.domain.models.UiConfiguration
+import com.example.testdynamiccreationui.domain.models.ui_configuration.UiConfiguration
 import com.example.testdynamiccreationui.domain.repositories.Repository
 import javax.inject.Inject
 
