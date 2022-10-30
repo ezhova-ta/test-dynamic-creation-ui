@@ -25,8 +25,8 @@ import com.example.testdynamiccreationui.domain.models.ui_configuration.UiConfig
 import com.example.testdynamiccreationui.domain.models.user.User
 import com.example.testdynamiccreationui.presentation.adapters.UserInfoAdapter
 
-class MainFragment : Fragment() {
-	private val viewModel: MainViewModel by viewModels()
+class MainFragment : BaseFragment() {
+	override val viewModel: MainViewModel by viewModels()
 	private lateinit var userInfoAdapter: UserInfoAdapter
 
 	companion object {
@@ -38,9 +38,7 @@ class MainFragment : Fragment() {
 		container: ViewGroup?,
 		savedInstanceState: Bundle?
 	): View {
-		return ConstraintLayout(requireContext()).apply {
-			id = R.id.screenContainer
-		}
+		return ConstraintLayout(requireContext()).apply { id = R.id.screenContainer }
 	}
 
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -197,9 +195,9 @@ class MainFragment : Fragment() {
 	private fun showUserInfo(user: User) {
 		val userInfo = with(user) { listOf(
 				fullName,
-				String.format(getString(R.string.position), position),
-				String.format(getString(R.string.work_hours_in_month), workHoursInMonth),
-				String.format(getString(R.string.worked_out_hours), workedOutHours)
+				String.format(resources.getString(R.string.position), position),
+				String.format(resources.getString(R.string.work_hours_in_month), workHoursInMonth),
+				String.format(resources.getString(R.string.worked_out_hours), workedOutHours)
 		)}
 
 		userInfoAdapter.data = userInfo

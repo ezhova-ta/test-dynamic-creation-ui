@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.testdynamiccreationui.R
 import com.example.testdynamiccreationui.di.DiScopes.APP_SCOPE
 import com.example.testdynamiccreationui.di.DiScopes.MAIN_ACTIVITY_SCOPE
 import com.example.testdynamiccreationui.di.DiScopes.MAIN_SCREEN_VIEW_MODEL_SCOPE
@@ -18,7 +19,7 @@ import kotlinx.coroutines.launch
 import toothpick.Toothpick
 import javax.inject.Inject
 
-class MainViewModel : ViewModel() {
+class MainViewModel : BaseViewModel() {
 	@Inject lateinit var getUiConfigurationUseCase: GetUiConfigurationUseCase
 	@Inject lateinit var getUserInfoUseCase: GetUserInfoUseCase
 
@@ -38,7 +39,7 @@ class MainViewModel : ViewModel() {
 		getUiConfiguration()
 	}
 
-	private fun bindDiScope() {
+	override fun bindDiScope() {
 		val mainScreenScope = Toothpick.openScopes(
 			APP_SCOPE,
 			MAIN_ACTIVITY_SCOPE,
@@ -54,7 +55,7 @@ class MainViewModel : ViewModel() {
 				_uiConfigurationLiveData.postValue(uiConfiguration)
 				requiredParams = uiConfiguration.getTextInputs().getRequiredAttributes()
 			} catch(e: Exception) {
-				// TODO Show error message
+				showMessage(Text.TextResource(R.string.error_tyr_again_later))
 			}
 		}
 	}
@@ -75,12 +76,12 @@ class MainViewModel : ViewModel() {
 					val user = getUserInfoUseCase(action, enteredParams)
 					_foundUserLiveData.postValue(user)
 				} else {
-					// TODO Show message (Fill in the fields marked with *)
+					showMessage(Text.TextResource(R.string.fill_in_required_fields_message))
 				}
 			} catch(e: GettingUserInfoException) {
-				// TODO Show error message
+				showMessage(Text.TextString(e.description))
 			} catch(e: Exception) {
-				// TODO Show error message
+				showMessage(Text.TextResource(R.string.failed_to_get_employee_information_message))
 			}
 		}
 	}

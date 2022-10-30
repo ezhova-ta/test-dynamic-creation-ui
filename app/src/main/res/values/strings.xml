@@ -3,4 +3,7 @@
     <string name="position">Position: %s</string>
     <string name="work_hours_in_month">Work hours in month: %d</string>
     <string name="worked_out_hours">Worked out hours: %d</string>
+    <string name="fill_in_required_fields_message">Fill in the fields marked with *</string>
+    <string name="failed_to_get_employee_information_message">Failed to get employee information</string>
+    <string name="error_tyr_again_later">Error. Try again later</string>
 </resources>

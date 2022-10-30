@@ -3,4 +3,7 @@
     <string name="position">Должность: %s</string>
     <string name="work_hours_in_month">Рабочих часов в месяц: %d</string>
     <string name="worked_out_hours">Отработанные часы: %d</string>
+    <string name="fill_in_required_fields_message">Заполните все поля, отмеченные знаком *</string>
+    <string name="failed_to_get_employee_information_message">Не удалось получить информацию о сотруднике</string>
+    <string name="error_tyr_again_later">Ошибка. Повторите позже</string>
 </resources>
