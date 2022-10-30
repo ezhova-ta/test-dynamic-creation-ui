@@ -3,6 +3,7 @@ package com.example.testdynamiccreationui.presentation
 import android.annotation.SuppressLint
 import android.os.Bundle
 import android.text.InputType
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,7 +12,6 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintLayout.LayoutParams.*
 import androidx.core.view.setPadding
 import androidx.core.widget.addTextChangedListener
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -19,11 +19,12 @@ import com.example.testdynamiccreationui.R
 import com.example.testdynamiccreationui.domain.models.ui_configuration.FormButton
 import com.example.testdynamiccreationui.domain.models.ui_configuration.FormButtonType.BUTTON
 import com.example.testdynamiccreationui.domain.models.ui_configuration.FormTextInput
+import com.example.testdynamiccreationui.domain.models.ui_configuration.Layout
 import com.example.testdynamiccreationui.domain.models.ui_configuration.TextInputType.AUTO_COMPLETE_TEXT_VIEW
 import com.example.testdynamiccreationui.domain.models.ui_configuration.TextInputType.PLAIN_TEXT
-import com.example.testdynamiccreationui.domain.models.ui_configuration.UiConfiguration
 import com.example.testdynamiccreationui.domain.models.user.User
 import com.example.testdynamiccreationui.presentation.adapters.UserInfoAdapter
+import com.example.testdynamiccreationui.presentation.utils.convertDpToPx
 
 class MainFragment : BaseFragment() {
 	override val viewModel: MainViewModel by viewModels()
@@ -43,31 +44,34 @@ class MainFragment : BaseFragment() {
 
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 		super.onViewCreated(view, savedInstanceState)
-		viewModel.uiConfigurationLiveData.removeObservers(viewLifecycleOwner)
+		viewModel.layoutLiveData.removeObservers(viewLifecycleOwner)
 		viewModel.foundUserLiveData.removeObservers(viewLifecycleOwner)
-		viewModel.uiConfigurationLiveData.observe(viewLifecycleOwner) { showUi(it) }
+		viewModel.layoutLiveData.observe(viewLifecycleOwner) { showUi(it) }
 		viewModel.foundUserLiveData.observe(viewLifecycleOwner) { showUserInfo(it) }
 	}
 
-	private fun showUi(uiConfiguration: UiConfiguration) {
-		// TODO Temp (first activity)
-		uiConfiguration.activities.firstOrNull()?.layout?.let { layout ->
-			val headerView = createHeaderView(layout.header)
-			val inputsView = createTextInputsView(headerView.id, layout.form.text)
-			val buttonsView = createButtonsView(inputsView.id, layout.form.buttons)
-			val userView = createUserView(buttonsView.id)
-			(view as ConstraintLayout).apply {
-				setPadding(16) // TODO Padding in dp
-				removeAllViews()
-				addView(headerView)
-				addView(inputsView)
-				addView(buttonsView)
-				addView(userView)
-			}
+	private fun showUi(layout: Layout?) {
+		layout ?: return
+		val headerView = createHeaderView(layout.header)
+		val inputsView = createTextInputsView(headerView.id, layout.form.text)
+		val buttonsView = createButtonsView(inputsView.id, layout.form.buttons)
+		val userView = createUserView(buttonsView.id)
+		with(getFragmentContainer()) {
+			addView(headerView)
+			addView(inputsView)
+			addView(buttonsView)
+			addView(userView)
 		}
 	}
 
-	private fun createHeaderView(header: String): TextView {
+	private fun getFragmentContainer(): ViewGroup {
+		return (view as ConstraintLayout).apply {
+			setPadding(convertDpToPx(requireContext(), 8))
+			removeAllViews()
+		}
+	}
+
+	private fun createHeaderView(header: String): View {
 		val layoutParams = ConstraintLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply {
 			topToTop = PARENT_ID
 			startToStart = PARENT_ID
@@ -77,15 +81,15 @@ class MainFragment : BaseFragment() {
 		return TextView(requireContext()).apply {
 			id = R.id.fragmentHeaderView
 			text = header
-			textSize = 20f // TODO Text size in sp
+			setTextSize(TypedValue.COMPLEX_UNIT_SP, 24f)
 			this.layoutParams = layoutParams
 		}
 	}
 
-	private fun createTextInputsView(viewOnTopId: Int, textInputs: List<FormTextInput>): LinearLayout {
+	private fun createTextInputsView(viewOnTopId: Int, textInputs: List<FormTextInput>): View {
 		val layoutParams = ConstraintLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply {
 			topToBottom = viewOnTopId
-			topMargin = 16 // TODO Margin in dp
+			topMargin = convertDpToPx(requireContext(), 8)
 		}
 		return LinearLayout(requireContext()).apply {
 			id = R.id.textInputsView
@@ -105,19 +109,30 @@ class MainFragment : BaseFragment() {
 			PLAIN_TEXT -> createPlainTextInputView()
 		}.apply {
 			hint = textInput.caption
+			setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
 			setText(viewModel.enteredParams[textInput.attribute] , TextView.BufferType.EDITABLE)
-			addTextChangedListener { editable ->
-				val text = editable?.toString()
-				if(text.isNullOrEmpty()) {
-					viewModel.enteredParams.remove(textInput.attribute)
-				} else {
-					viewModel.enteredParams[textInput.attribute] = text
-				}
-			}
+			setTextChangedListener(textInput.attribute)
 		}
 
-		if(!textInput.required) return textInputView
+		return if(textInput.required) {
+			createRequiredTextInputView(textInputView)
+		} else {
+			textInputView
+		}
+	}
 
+	private fun EditText.setTextChangedListener(parameter: String) {
+		addTextChangedListener { editable ->
+			val text = editable?.toString()
+			if(text.isNullOrEmpty()) {
+				viewModel.enteredParams.remove(parameter)
+			} else {
+				viewModel.enteredParams[parameter] = text
+			}
+		}
+	}
+
+	private fun createRequiredTextInputView(textInputView: View): View {
 		val requiredSymbolView = TextView(requireContext()).apply { text = REQUIRED_INPUT_SYMBOL }
 		textInputView.layoutParams = LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply { weight = 1f }
 		return LinearLayout(requireContext()).apply {
@@ -141,12 +156,12 @@ class MainFragment : BaseFragment() {
 		return EditText(requireContext()).apply { inputType = InputType.TYPE_CLASS_TEXT }
 	}
 
-	private fun createButtonsView(viewOnTopId: Int, buttons: List<FormButton>): LinearLayout {
+	private fun createButtonsView(viewOnTopId: Int, buttons: List<FormButton>): View {
 		val layoutParams = ConstraintLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply {
 			topToBottom = viewOnTopId
 			startToStart = PARENT_ID
 			endToEnd = PARENT_ID
-			topMargin = 16 // TODO Margin in dp
+			topMargin = convertDpToPx(requireContext(), 8)
 		}
 
 		return LinearLayout(requireContext()).apply {
@@ -169,20 +184,19 @@ class MainFragment : BaseFragment() {
 	private fun createButtonView(button: FormButton): Button {
 		return Button(requireContext()).apply {
 			hint = button.caption
-			setOnClickListener {
-				viewModel.onButtonClick(button.formAction)
-			}
+			setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
+			setOnClickListener { viewModel.onButtonClick(button.formAction) }
 		}
 	}
 
-	private fun createUserView(viewOnTopId: Int): RecyclerView {
+	private fun createUserView(viewOnTopId: Int): View {
 		val recyclerView = RecyclerView(requireContext())
 		val layoutParams = ConstraintLayout.LayoutParams(0, 0).apply {
 			topToBottom = viewOnTopId
 			bottomToBottom = PARENT_ID
 			startToStart = PARENT_ID
 			endToEnd = PARENT_ID
-			topMargin = 16 // TODO Margin in dp
+			topMargin = convertDpToPx(requireContext(), 8)
 		}
 		recyclerView.layoutParams = layoutParams
 		recyclerView.layoutManager = LinearLayoutManager(
@@ -197,14 +211,14 @@ class MainFragment : BaseFragment() {
 
 	@SuppressLint("NotifyDataSetChanged")
 	private fun showUserInfo(user: User) {
-		val userInfo = with(user) { listOf(
-				fullName,
-				String.format(resources.getString(R.string.position), position),
-				String.format(resources.getString(R.string.work_hours_in_month), workHoursInMonth),
-				String.format(resources.getString(R.string.worked_out_hours), workedOutHours)
-		)}
-
-		userInfoAdapter.data = userInfo
+		userInfoAdapter.data = user.getFormattedUserInfo()
 		userInfoAdapter.notifyDataSetChanged()
 	}
+
+	private fun User.getFormattedUserInfo() = listOf(
+		fullName,
+		String.format(resources.getString(R.string.position), position),
+		String.format(resources.getString(R.string.work_hours_in_month), workHoursInMonth),
+		String.format(resources.getString(R.string.worked_out_hours), workedOutHours)
+	)
 }

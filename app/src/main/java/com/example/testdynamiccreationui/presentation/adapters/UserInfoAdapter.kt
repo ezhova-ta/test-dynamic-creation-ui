@@ -1,16 +1,18 @@
 package com.example.testdynamiccreationui.presentation.adapters
 
+import android.util.TypedValue
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.core.view.setPadding
 import androidx.recyclerview.widget.RecyclerView
+import com.example.testdynamiccreationui.presentation.utils.convertDpToPx
 
 class UserInfoAdapter : RecyclerView.Adapter<UserInfoAdapter.ViewHolder>() {
 	var data: List<String> = emptyList()
 
 	override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
 		val view = TextView(parent.context)
-		view.setPadding(8) // TODO Padding in dp
+		view.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
 		return ViewHolder(view)
 	}
 
