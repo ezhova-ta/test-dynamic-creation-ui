@@ -107,7 +107,12 @@ class MainFragment : BaseFragment() {
 			hint = textInput.caption
 			setText(viewModel.enteredParams[textInput.attribute] , TextView.BufferType.EDITABLE)
 			addTextChangedListener { editable ->
-				editable?.let { viewModel.enteredParams[textInput.attribute] = it.toString() }
+				val text = editable?.toString()
+				if(text.isNullOrEmpty()) {
+					viewModel.enteredParams.remove(textInput.attribute)
+				} else {
+					viewModel.enteredParams[textInput.attribute] = text
+				}
 			}
 		}
 
@@ -125,7 +130,6 @@ class MainFragment : BaseFragment() {
 	private fun createAutoCompleteTextInputView(textInput: FormTextInput): AutoCompleteTextView {
 		val adapter = ArrayAdapter(
 			requireContext(),
-			// TODO Temp android.R.layout.simple_dropdown_item_1line
 			android.R.layout.simple_dropdown_item_1line,
 			textInput.suggestions.toTypedArray()
 		)
