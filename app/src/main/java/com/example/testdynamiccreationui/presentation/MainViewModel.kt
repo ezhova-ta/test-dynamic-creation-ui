@@ -8,6 +8,7 @@ import com.example.testdynamiccreationui.di.DiScopes.APP_SCOPE
 import com.example.testdynamiccreationui.di.DiScopes.MAIN_ACTIVITY_SCOPE
 import com.example.testdynamiccreationui.di.DiScopes.MAIN_SCREEN_VIEW_MODEL_SCOPE
 import com.example.testdynamiccreationui.domain.exceptions.GettingUserInfoException
+import com.example.testdynamiccreationui.domain.models.ui_configuration.FormTextInput
 import com.example.testdynamiccreationui.domain.models.ui_configuration.UiConfiguration
 import com.example.testdynamiccreationui.domain.models.user.User
 import com.example.testdynamiccreationui.domain.usecases.GetUiConfigurationUseCase
@@ -21,6 +22,9 @@ class MainViewModel : ViewModel() {
 	@Inject lateinit var getUiConfigurationUseCase: GetUiConfigurationUseCase
 	@Inject lateinit var getUserInfoUseCase: GetUserInfoUseCase
 
+	private lateinit var requiredParams: Set<String>
+	val enteredParams = mutableMapOf<String, String>()
+
 	private val _uiConfigurationLiveData = MutableLiveData<UiConfiguration>()
 	val uiConfigurationLiveData: LiveData<UiConfiguration>
 		get() = _uiConfigurationLiveData
@@ -31,6 +35,7 @@ class MainViewModel : ViewModel() {
 
 	init {
 		bindDiScope()
+		getUiConfiguration()
 	}
 
 	private fun bindDiScope() {
@@ -42,32 +47,46 @@ class MainViewModel : ViewModel() {
 		Toothpick.inject(this, mainScreenScope)
 	}
 
-	fun onScreenCreated() {
-		getUiConfiguration()
-	}
-
 	private fun getUiConfiguration() {
 		viewModelScope.launch(Dispatchers.IO) {
 			try {
 				val uiConfiguration = getUiConfigurationUseCase()
 				_uiConfigurationLiveData.postValue(uiConfiguration)
+				requiredParams = uiConfiguration.getTextInputs().getRequiredAttributes()
 			} catch(e: Exception) {
 				// TODO Show error message
 			}
 		}
 	}
 
-	fun onButtonClick(action: String, params: Map<String, String>) {
+	private fun UiConfiguration.getTextInputs(): List<FormTextInput> {
+		// TODO Temp (first activity)
+		return activities.firstOrNull()?.layout?.form?.text ?: emptyList()
+	}
+
+	private fun List<FormTextInput>.getRequiredAttributes(): Set<String> {
+		return filter { it.required }.map { it.attribute }.toSet()
+	}
+
+	fun onButtonClick(action: String) {
 		viewModelScope.launch(Dispatchers.IO) {
 			try {
-				val user = getUserInfoUseCase(action, params)
-				_foundUserLiveData.postValue(user)
+				if(isAllRequiredParamsFilled()) {
+					val user = getUserInfoUseCase(action, enteredParams)
+					_foundUserLiveData.postValue(user)
+				} else {
+					// TODO Show message (Fill in the fields marked with *)
+				}
 			} catch(e: GettingUserInfoException) {
 				// TODO Show error message
 			} catch(e: Exception) {
 				// TODO Show error message
 			}
 		}
+	}
+
+	private fun isAllRequiredParamsFilled(): Boolean {
+		return enteredParams.keys.containsAll(requiredParams)
 	}
 
 	override fun onCleared() {

@@ -1,6 +1,6 @@
 package com.example.testdynamiccreationui.presentation
 
-import android.content.Context
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.text.InputType
 import android.view.LayoutInflater
@@ -13,6 +13,8 @@ import androidx.core.view.setPadding
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.testdynamiccreationui.R
 import com.example.testdynamiccreationui.domain.models.ui_configuration.FormButton
 import com.example.testdynamiccreationui.domain.models.ui_configuration.FormButtonType.BUTTON
@@ -21,14 +23,14 @@ import com.example.testdynamiccreationui.domain.models.ui_configuration.TextInpu
 import com.example.testdynamiccreationui.domain.models.ui_configuration.TextInputType.PLAIN_TEXT
 import com.example.testdynamiccreationui.domain.models.ui_configuration.UiConfiguration
 import com.example.testdynamiccreationui.domain.models.user.User
+import com.example.testdynamiccreationui.presentation.adapters.UserInfoAdapter
 
 class MainFragment : Fragment() {
 	private val viewModel: MainViewModel by viewModels()
-	private val textInputsValues = mutableMapOf<String, String>()
+	private lateinit var userInfoAdapter: UserInfoAdapter
 
-	override fun onAttach(context: Context) {
-		super.onAttach(context)
-		viewModel.onScreenCreated()
+	companion object {
+		private const val REQUIRED_INPUT_SYMBOL = "*"
 	}
 
 	override fun onCreateView(
@@ -43,25 +45,27 @@ class MainFragment : Fragment() {
 
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 		super.onViewCreated(view, savedInstanceState)
-		viewModel.foundUserLiveData.observe(viewLifecycleOwner) { showFoundUser(it) }
+		viewModel.uiConfigurationLiveData.removeObservers(viewLifecycleOwner)
+		viewModel.foundUserLiveData.removeObservers(viewLifecycleOwner)
 		viewModel.uiConfigurationLiveData.observe(viewLifecycleOwner) { showUi(it) }
-	}
-
-	private fun showFoundUser(user: User) {
-		TODO()
+		viewModel.foundUserLiveData.observe(viewLifecycleOwner) { showUserInfo(it) }
 	}
 
 	private fun showUi(uiConfiguration: UiConfiguration) {
 		// TODO Temp (first activity)
-		val uiConfigurationActivity = uiConfiguration.activities.firstOrNull() ?: return
-		val headerView = createHeaderView(uiConfigurationActivity.layout.header)
-		val inputsView = createTextInputsView(headerView.id, uiConfigurationActivity.layout.form.text)
-		val buttonsView = createButtonsView(inputsView.id, uiConfigurationActivity.layout.form.buttons)
-		(view as ConstraintLayout).apply {
-			setPadding(16) // TODO Padding in dp
-			addView(headerView)
-			addView(inputsView)
-			addView(buttonsView)
+		uiConfiguration.activities.firstOrNull()?.layout?.let { layout ->
+			val headerView = createHeaderView(layout.header)
+			val inputsView = createTextInputsView(headerView.id, layout.form.text)
+			val buttonsView = createButtonsView(inputsView.id, layout.form.buttons)
+			val userView = createUserView(buttonsView.id)
+			(view as ConstraintLayout).apply {
+				setPadding(16) // TODO Padding in dp
+				removeAllViews()
+				addView(headerView)
+				addView(inputsView)
+				addView(buttonsView)
+				addView(userView)
+			}
 		}
 	}
 
@@ -94,11 +98,28 @@ class MainFragment : Fragment() {
 	}
 
 	private fun LinearLayout.addTextInputViews(textInputs: List<FormTextInput>) {
-		textInputs.forEach { textInput ->
-			val textInputView = when(textInput.type) {
-				AUTO_COMPLETE_TEXT_VIEW -> createAutoCompleteTextInputView(textInput)
-				PLAIN_TEXT -> createPlainTextInputView(textInput)
+		textInputs.forEach { textInput -> addView(createTextInputView(textInput)) }
+	}
+
+	private fun createTextInputView(textInput: FormTextInput): View {
+		val textInputView = when(textInput.type) {
+			AUTO_COMPLETE_TEXT_VIEW -> createAutoCompleteTextInputView(textInput)
+			PLAIN_TEXT -> createPlainTextInputView()
+		}.apply {
+			hint = textInput.caption
+			setText(viewModel.enteredParams[textInput.attribute] , TextView.BufferType.EDITABLE)
+			addTextChangedListener { editable ->
+				editable?.let { viewModel.enteredParams[textInput.attribute] = it.toString() }
 			}
+		}
+
+		if(!textInput.required) return textInputView
+
+		val requiredSymbolView = TextView(requireContext()).apply { text = REQUIRED_INPUT_SYMBOL }
+		textInputView.layoutParams = LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply { weight = 1f }
+		return LinearLayout(requireContext()).apply {
+			orientation = LinearLayout.HORIZONTAL
+			addView(requiredSymbolView)
 			addView(textInputView)
 		}
 	}
@@ -111,23 +132,11 @@ class MainFragment : Fragment() {
 			textInput.suggestions.toTypedArray()
 		)
 
-		return AutoCompleteTextView(requireContext()).apply {
-			setAdapter(adapter)
-			hint = textInput.caption
-			addTextChangedListener { text ->
-				text?.let { textInputsValues[textInput.attribute] = it.toString() }
-			}
-		}
+		return AutoCompleteTextView(requireContext()).apply { setAdapter(adapter) }
 	}
 
-	private fun createPlainTextInputView(textInput: FormTextInput): EditText {
-		return EditText(requireContext()).apply {
-			inputType = InputType.TYPE_CLASS_TEXT
-			hint = textInput.caption
-			addTextChangedListener { text ->
-				text?.let { textInputsValues[textInput.attribute] = it.toString() }
-			}
-		}
+	private fun createPlainTextInputView(): EditText {
+		return EditText(requireContext()).apply { inputType = InputType.TYPE_CLASS_TEXT }
 	}
 
 	private fun createButtonsView(viewOnTopId: Int, buttons: List<FormButton>): LinearLayout {
@@ -159,8 +168,41 @@ class MainFragment : Fragment() {
 		return Button(requireContext()).apply {
 			hint = button.caption
 			setOnClickListener {
-				viewModel.onButtonClick(button.formAction, textInputsValues)
+				viewModel.onButtonClick(button.formAction)
 			}
 		}
+	}
+
+	private fun createUserView(viewOnTopId: Int): RecyclerView {
+		val recyclerView = RecyclerView(requireContext())
+		val layoutParams = ConstraintLayout.LayoutParams(0, 0).apply {
+			topToBottom = viewOnTopId
+			bottomToBottom = PARENT_ID
+			startToStart = PARENT_ID
+			endToEnd = PARENT_ID
+			topMargin = 16 // TODO Margin in dp
+		}
+		recyclerView.layoutParams = layoutParams
+		recyclerView.layoutManager = LinearLayoutManager(
+			requireContext(),
+			LinearLayoutManager.VERTICAL,
+			false
+		)
+		userInfoAdapter = UserInfoAdapter()
+		recyclerView.adapter = userInfoAdapter
+		return recyclerView
+	}
+
+	@SuppressLint("NotifyDataSetChanged")
+	private fun showUserInfo(user: User) {
+		val userInfo = with(user) { listOf(
+				fullName,
+				String.format(getString(R.string.position), position),
+				String.format(getString(R.string.work_hours_in_month), workHoursInMonth),
+				String.format(getString(R.string.worked_out_hours), workedOutHours)
+		)}
+
+		userInfoAdapter.data = userInfo
+		userInfoAdapter.notifyDataSetChanged()
 	}
 }
